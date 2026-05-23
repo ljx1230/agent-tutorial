@@ -9,7 +9,8 @@ if __package__ in {None, ""}:
 from demo6.framework import get_api_key
 
 from demo8.config import MAX_WORKFLOW_STEPS, WORKSPACE_DIR
-from demo8.framework import Workflow, WorkflowContext
+from demo8.example_context import CodeWorkflowContext
+from demo8.framework import Workflow
 from demo8.nodes import ApplyNode, ClassifyNode, InspectNode, PlanNode, ReportNode, VerifyNode
 
 
@@ -59,7 +60,7 @@ def main() -> None:
             print("对话结束。")
             break
 
-        ctx = WorkflowContext(goal=goal, workspace_dir=WORKSPACE_DIR)
+        ctx = CodeWorkflowContext(goal=goal, workspace_dir=WORKSPACE_DIR)
         try:
             result = workflow.run(ctx)
         except Exception as exc:
