@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from demo6.framework import ask_llm_json, ask_llm_text
-from demo8.framework import BaseWorkflowNode, WorkflowContext
+from demo8.example_context import CodeWorkflowContext
+from demo8.framework import BaseWorkflowNode
 from demo8.tools import list_files, read_text_file, replace_text_in_file, search_text, write_text_file
 
 
@@ -17,7 +18,7 @@ class ClassifyNode(BaseWorkflowNode):
     后面的节点再走不同路径。
     """
 
-    def run(self, ctx: WorkflowContext) -> str:
+    def run(self, ctx: CodeWorkflowContext) -> str:
         system_prompt = (
             "你是一个 workflow 分类器。"
             "请根据用户目标输出 JSON，字段如下："
@@ -39,13 +40,13 @@ class InspectNode(BaseWorkflowNode):
     """
     先观察工作区。
 
-    workflow 的第二步通常不是急着动手，而是先看：
+    workflow 的第二步先看：
     - 当前目录有什么
     - 目标文件长什么样
     - 搜索关键词命中了哪些地方
     """
 
-    def run(self, ctx: WorkflowContext) -> str:
+    def run(self, ctx: CodeWorkflowContext) -> str:
         listing = list_files(str(ctx.workspace_dir), ".")
         ctx.logs.append(f"workspace_list_count={len(listing.get('items', []))}")
 
@@ -72,7 +73,7 @@ class PlanNode(BaseWorkflowNode):
     可执行的 patch plan。
     """
 
-    def run(self, ctx: WorkflowContext) -> str:
+    def run(self, ctx: CodeWorkflowContext) -> str:
         system_prompt = (
             "你是一个 workflow 规划器。"
             "根据用户目标、文件快照和搜索结果，输出 JSON。"
@@ -95,7 +96,7 @@ class PlanNode(BaseWorkflowNode):
 class ApplyNode(BaseWorkflowNode):
     """执行修改计划。"""
 
-    def run(self, ctx: WorkflowContext) -> str:
+    def run(self, ctx: CodeWorkflowContext) -> str:
         relative_path = str(ctx.patch_plan.get("relative_path") or ctx.target_file or "")
         old_text = str(ctx.patch_plan.get("old_text") or "")
         new_text = str(ctx.patch_plan.get("new_text") or "")
@@ -126,7 +127,7 @@ class ApplyNode(BaseWorkflowNode):
 class VerifyNode(BaseWorkflowNode):
     """读取文件并确认修改结果。"""
 
-    def run(self, ctx: WorkflowContext) -> str:
+    def run(self, ctx: CodeWorkflowContext) -> str:
         if not ctx.apply_result.get("ok"):
             ctx.verification_result = {"ok": False, "error": "apply failed"}
             return "report"
@@ -146,7 +147,7 @@ class ReportNode(BaseWorkflowNode):
     最终输出不是工具日志，而是对用户可读的简短结果。
     """
 
-    def run(self, ctx: WorkflowContext) -> str:
+    def run(self, ctx: CodeWorkflowContext) -> str:
         system_prompt = (
             "你是一个 workflow 报告生成器。"
             "基于执行日志、修改结果和验证结果，输出一段简洁中文总结。"
