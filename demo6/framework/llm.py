@@ -4,6 +4,7 @@ import os
 from typing import Any
 
 import requests
+import json
 
 DEFAULT_API_URL = "https://api.deepseek.com/chat/completions"
 DEFAULT_MODEL_NAME = "deepseek-v4-flash"
@@ -84,3 +85,66 @@ def call_llm(
 
     result = response.json()
     return result["choices"][0]["message"]
+
+def build_messages(system_prompt: str, user_content: str) -> list[dict[str, str]]:
+    """
+    构造最简单的单轮提示消息。
+    """
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content},
+    ]
+
+def ask_llm_text(
+    system_prompt: str,
+    user_content: str,
+    *,
+    api_key: str | None = None,
+) -> str:
+    """
+    请求模型返回普通文本。
+
+    适合 demo8 这种 workflow 节点内部的“一次性调用”场景。
+    """
+    resolved_api_key = api_key or get_api_key()
+    result = call_llm(
+        api_key=resolved_api_key,
+        messages=build_messages(system_prompt, user_content),
+        tools=[],
+    )
+    return result.get("content", "")
+
+
+def ask_llm_json(
+    system_prompt: str,
+    user_content: str,
+    *,
+    api_key: str | None = None,
+) -> dict[str, Any]:
+    """
+    请求模型返回 JSON 文本并解析。
+
+    这层封装的意义是：
+    - workflow 节点只关心“我要一个 JSON 结果”
+    - 不需要每个节点都重复写 parse 逻辑
+    """
+    text = ask_llm_text(
+        system_prompt,
+        user_content,
+        api_key=api_key,
+    ).strip()
+
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if len(lines) >= 3:
+            text = "\n".join(lines[1:-1]).strip()
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"模型没有返回合法 JSON：{exc}\n原始内容：{text}") from exc
+
+    if not isinstance(data, dict):
+        raise ValueError(f"模型返回的 JSON 不是对象：{text}")
+
+    return data

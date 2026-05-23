@@ -1,6 +1,6 @@
 # Agent Tutorial Demo
 
-这是一个循序渐进的 Agent 教程仓库，按 `demo1` 到 `demo7` 逐步搭建一个越来越完整的 Agent 系统。
+这是一个循序渐进的 Agent 教程仓库，按 `demo1` 到 `demo8` 逐步搭建一个越来越完整的 Agent 系统。
 
 整个仓库的设计思路很清晰：
 
@@ -11,6 +11,7 @@
 - `demo5` 进入 ReAct 风格 Agent
 - `demo6` 把前面的能力抽象成一个最小框架
 - `demo7` 用这个框架做一个简化版 coding agent
+- `demo8` 再往前一步，引入固定节点和路由的 workflow agent
 
 如果你是第一次接触 Agent，建议严格按顺序学习，不要直接跳到后面的 demo。这个仓库最有价值的地方，不只是“跑起来”，而是能看清楚 Agent 的能力是怎么一层层长出来的。
 
@@ -62,6 +63,7 @@ python demo4/planning_demo.py
 python demo5/react_demo.py
 python demo6/framework_demo.py
 python demo7/coding_agent_demo.py
+python demo8/workflow_demo.py
 ```
 
 ## 仓库结构
@@ -74,6 +76,7 @@ demo4/  Planning：显式步骤规划
 demo5/  ReAct：思考-行动-观察循环
 demo6/  Framework：最小 Agent 框架
 demo7/  Coding Agent：受限工作区内的代码代理
+demo8/  Workflow Agent：固定节点编排的工作流代理
 ```
 
 ## Demo 逐个介绍
@@ -327,6 +330,57 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 
 如果你能看懂这一节，基本就已经具备自己做一个小型 coding agent 原型的能力了。
 
+### demo8：Workflow Agent Demo
+
+入口文件：[demo8/workflow_demo.py](D:\code\ai\agent-tutorial-public\demo8\workflow_demo.py)
+
+关键模块：
+
+- [demo8/framework/workflow.py](D:\code\ai\agent-tutorial-public\demo8\framework\workflow.py)
+- [demo8/framework/node.py](D:\code\ai\agent-tutorial-public\demo8\framework\node.py)
+- [demo8/framework/context.py](D:\code\ai\agent-tutorial-public\demo8\framework\context.py)
+- [demo8/nodes.py](D:\code\ai\agent-tutorial-public\demo8\nodes.py)
+- [demo8/tools.py](D:\code\ai\agent-tutorial-public\demo8\tools.py)
+
+这一节继续沿着 `demo6`、`demo7` 往前走，但重点从“通用 runtime”切到“固定工作流编排”。
+
+这个 demo 展示了：
+
+- 如何把任务拆成一组固定节点
+- 如何让节点通过 `action` 决定下一跳
+- 如何把 `classify -> inspect -> plan -> apply -> verify -> report` 串成一条工作流
+- 如何把 workflow 能力和业务节点实现分层
+- 如何在代码修改任务里显式加入“验证”步骤
+
+`demo8` 里的典型工作流是：
+
+1. `ClassifyNode` 先判断这是“总结类任务”还是“修改类任务”
+2. `InspectNode` 先查看目录、文件快照和搜索结果
+3. `PlanNode` 产出一个精确修改计划
+4. `ApplyNode` 执行修改
+5. `VerifyNode` 再读取文件确认变更结果
+6. `ReportNode` 输出最终总结
+
+和 `demo7` 相比，这一节更强调：
+
+- 任务流转是显式节点，不只是自由循环
+- 每个节点职责更单一，更适合扩展和调试
+- 对于需要稳定步骤、清晰审计链路的任务，workflow 往往比自由 Agent 更容易控
+
+示例工作区在这里：
+
+- [demo8/project_workspace/README.md](D:\code\ai\agent-tutorial-public\demo8\project_workspace\README.md)
+- [demo8/project_workspace/app.py](D:\code\ai\agent-tutorial-public\demo8\project_workspace\app.py)
+- [demo8/project_workspace/settings.py](D:\code\ai\agent-tutorial-public\demo8\project_workspace\settings.py)
+- [demo8/project_workspace/utils.py](D:\code\ai\agent-tutorial-public\demo8\project_workspace\utils.py)
+
+建议你用这一节重点体会两个问题：
+
+- 什么场景适合“自由 agent”
+- 什么场景更适合“固定 workflow”
+
+如果 `demo7` 教你的是“像 coding agent 一样工作”，那么 `demo8` 教你的就是“把这套工作方式编排成可预测的流程”。
+
 ## 推荐学习路线
 
 ### 路线一：完全新手
@@ -340,6 +394,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 5. `demo5`：理解 ReAct 主循环
 6. `demo6`：理解框架抽象
 7. `demo7`：理解真实场景落地
+8. `demo8`：理解 workflow 编排和显式验证
 
 每学完一个 demo，都建议做两件事：
 
@@ -352,7 +407,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 
 1. 快速浏览 `demo1`
 2. 重点读 `demo2` 到 `demo5`
-3. 把主要精力放在 `demo6` 和 `demo7`
+3. 把主要精力放在 `demo6`、`demo7` 和 `demo8`
 
 这种路线更适合已经会写 prompt、会调接口，但还没形成 Agent 系统思维的人。
 
@@ -365,6 +420,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 3. `demo5`：ReAct 主循环
 4. `demo6`：框架抽象
 5. `demo7`：面向代码场景的工具设计
+6. `demo8`：节点编排与 workflow 路由
 
 你的关注点应该放在这些问题上：
 
@@ -411,6 +467,11 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 - coding agent 为什么必须强调“先观察后修改”
 - 为什么代码修改工具需要更强的安全约束
 
+### 学完 demo8 后
+
+- workflow 节点和通用 agent loop 的取舍是什么
+- 为什么有些任务需要单独的 verify 节点
+
 ## 建议的动手练习
 
 如果你想真正学会，建议按这个顺序自己改：
@@ -422,6 +483,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 5. 在 `demo5` 中让 Agent 支持“先创建再读取再总结”
 6. 在 `demo6` 中新增一个你自己的 `@tool`
 7. 在 `demo7` 中增加一个“只做分析、不做修改”的审查型工具
+8. 在 `demo8` 中新增一个节点，比如“review patch”或“risk check”
 
 ## 如何用这份仓库来学习
 
@@ -451,7 +513,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 - 状态
 - 循环
 - 框架
+- 工作流编排
 - 场景化落地
 
 如果你按顺序学完，并且每一节都自己改过一点代码，基本就能从“会调用模型”进阶到“会设计一个最小可用 Agent 系统”。
-
