@@ -2,7 +2,7 @@
 
 这是一个循序渐进的 Agent 教程仓库，按 `demo1` 到 `demo8` 逐步搭建一个越来越完整的 Agent 系统。
 
-整个仓库的设计思路很清晰：
+设计思路：
 
 - `demo1` 先学最基础的 LLM 调用
 - `demo2` 加上多轮对话和短期记忆
@@ -14,6 +14,16 @@
 - `demo8` 再往前一步，引入固定节点和路由的 workflow agent
 
 如果你是第一次接触 Agent，建议严格按顺序学习，不要直接跳到后面的 demo。这个仓库最有价值的地方，不只是“跑起来”，而是能看清楚 Agent 的能力是怎么一层层长出来的。
+
+## 作者信息
+
+- B站作者：氪金氪氪氪氪
+- B站主页：[https://space.bilibili.com/444210261](https://space.bilibili.com/444210261)
+- 校招 8 家互联网大厂 offer
+
+## 教程配套视频
+
+- 视频讲解地址：[https://www.bilibili.com/video/BV1N8orBPEjR](https://www.bilibili.com/video/BV1N8orBPEjR)
 
 ## 适合谁
 
@@ -501,16 +511,6 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 1. 这一节新增了什么能力
 2. 这个能力是靠哪些数据结构实现的
 3. 如果让我自己重写，我会保留什么，简化什么
-
-## 作者信息
-
-- B站作者：氪金氪氪氪氪
-- B站主页：[https://space.bilibili.com/444210261](https://space.bilibili.com/444210261)
-- 校招 8 家互联网大厂 offer
-
-## 教程配套视频
-
-- 视频讲解地址：[https://www.bilibili.com/video/BV1N8orBPEjR](https://www.bilibili.com/video/BV1N8orBPEjR)
 
 ## 总结
 
