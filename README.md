@@ -1,6 +1,6 @@
 # Agent Tutorial Demo
 
-这是一个循序渐进的 Agent 教程仓库，按 `demo1` 到 `demo8` 逐步搭建一个越来越完整的 Agent 系统。
+这是一个循序渐进的 Agent 教程仓库，按 `demo1` 到 `demo9` 逐步搭建一个越来越完整的 Agent 系统。
 
 设计思路：
 
@@ -12,6 +12,7 @@
 - `demo6` 把前面的能力抽象成一个最小框架
 - `demo7` 用这个框架做一个简化版 coding agent
 - `demo8` 再往前一步，引入固定节点和路由的 workflow agent
+- `demo9` 在 workflow 的基础上加入 HITL（Human-in-the-Loop）审批
 
 如果你是第一次接触 Agent，建议严格按顺序学习，不要直接跳到后面的 demo。这个仓库最有价值的地方，不只是“跑起来”，而是能看清楚 Agent 的能力是怎么一层层长出来的。
 
@@ -74,6 +75,7 @@ python demo5/react_demo.py
 python demo6/framework_demo.py
 python demo7/coding_agent_demo.py
 python demo8/workflow_demo.py
+python demo9/hitl_demo.py
 ```
 
 ## 仓库结构
@@ -87,6 +89,7 @@ demo5/  ReAct：思考-行动-观察循环
 demo6/  Framework：最小 Agent 框架
 demo7/  Coding Agent：受限工作区内的代码代理
 demo8/  Workflow Agent：固定节点编排的工作流代理
+demo9/  HITL Workflow：带人工确认的工作流代理
 ```
 
 ## Demo 逐个介绍
@@ -361,6 +364,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 - 如何把 `classify -> inspect -> plan -> apply -> verify -> report` 串成一条工作流
 - 如何把 workflow 能力和业务节点实现分层
 - 如何在代码修改任务里显式加入“验证”步骤
+- 如何把框架层上下文抽象成更通用的 `WorkflowContext`
 
 `demo8` 里的典型工作流是：
 
@@ -391,6 +395,42 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 
 如果 `demo7` 教你的是“像 coding agent 一样工作”，那么 `demo8` 教你的就是“把这套工作方式编排成可预测的流程”。
 
+### demo9：HITL Workflow Demo
+
+入口文件：[demo9/hitl_demo.py](D:\code\ai\agent-tutorial-public\demo9\hitl_demo.py)
+
+关键模块：
+
+- [demo9/hitl_context.py](D:\code\ai\agent-tutorial-public\demo9\hitl_context.py)
+- [demo9/nodes.py](D:\code\ai\agent-tutorial-public\demo9\nodes.py)
+- [demo9/project_workspace/README.md](D:\code\ai\agent-tutorial-public\demo9\project_workspace\README.md)
+- [demo8/framework/context.py](D:\code\ai\agent-tutorial-public\demo8\framework\context.py)
+
+这一节是在 `demo8` 的 workflow 基础上继续往前推进，核心主题是：Human-in-the-Loop。
+
+这个 demo 展示了：
+
+- 如何在 workflow 中插入人工确认节点
+- 如何把 `plan -> approval -> apply` 变成强约束流程
+- 如何在真正写文件前把修改计划展示给人看
+- 如果人拒绝修改，workflow 应该如何终止并生成报告
+- 如何复用 `demo8` 的 `HitlContext` 做更安全的代码修改工作流
+
+`demo9` 的关键变化，是多了这条链路：
+
+1. 模型先生成修改计划
+2. `ApprovalNode` 把目标文件、修改理由、旧内容、新内容展示出来
+3. 只有人明确输入 `yes`，workflow 才会进入 `SafeApplyNode`
+4. 如果人拒绝，直接进入 `HitlReportNode`
+
+和 `demo8` 相比，这一节更强调：
+
+- 不是所有任务都应该自动落盘
+- 当任务存在风险时，Agent 需要把“执行权”交还给人
+- 真正可用的 Agent 系统，很多时候不是更自动，而是更可控
+
+如果 `demo8` 教你的是“如何让流程更稳定”，那么 `demo9` 教你的就是“如何让流程更安全”。
+
 ## 推荐学习路线
 
 ### 路线一：完全新手
@@ -405,6 +445,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 6. `demo6`：理解框架抽象
 7. `demo7`：理解真实场景落地
 8. `demo8`：理解 workflow 编排和显式验证
+9. `demo9`：理解 HITL 审批和安全落盘
 
 每学完一个 demo，都建议做两件事：
 
@@ -417,7 +458,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 
 1. 快速浏览 `demo1`
 2. 重点读 `demo2` 到 `demo5`
-3. 把主要精力放在 `demo6`、`demo7` 和 `demo8`
+3. 把主要精力放在 `demo6`、`demo7`、`demo8` 和 `demo9`
 
 这种路线更适合已经会写 prompt、会调接口，但还没形成 Agent 系统思维的人。
 
@@ -431,6 +472,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 4. `demo6`：框架抽象
 5. `demo7`：面向代码场景的工具设计
 6. `demo8`：节点编排与 workflow 路由
+7. `demo9`：人工确认与安全执行边界
 
 你的关注点应该放在这些问题上：
 
@@ -482,6 +524,11 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 - workflow 节点和通用 agent loop 的取舍是什么
 - 为什么有些任务需要单独的 verify 节点
 
+### 学完 demo9 后
+
+- 什么情况下需要 Human-in-the-Loop
+- 为什么“先给人确认再写文件”是很多生产系统的必要能力
+
 ## 建议的动手练习
 
 如果你想真正学会，建议按这个顺序自己改：
@@ -494,6 +541,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 6. 在 `demo6` 中新增一个你自己的 `@tool`
 7. 在 `demo7` 中增加一个“只做分析、不做修改”的审查型工具
 8. 在 `demo8` 中新增一个节点，比如“review patch”或“risk check”
+9. 在 `demo9` 中给审批节点增加“修改意见后重试”的分支
 
 ## 如何用这份仓库来学习
 
@@ -524,6 +572,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 - 循环
 - 框架
 - 工作流编排
+- 人工确认
 - 场景化落地
 
 如果你按顺序学完，并且每一节都自己改过一点代码，基本就能从“会调用模型”进阶到“会设计一个最小可用 Agent 系统”。

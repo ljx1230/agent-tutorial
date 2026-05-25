@@ -1,0 +1,2 @@
+APP_NAME = "HITL Demo App"
+DEFAULT_LANGUAGE = "zh-CN"
