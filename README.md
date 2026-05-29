@@ -1,6 +1,6 @@
 # Agent Tutorial Demo
 
-这是一个循序渐进的 Agent 教程仓库，按 `demo1` 到 `demo9` 逐步搭建一个越来越完整的 Agent 系统。
+这是一个循序渐进的 Agent 教程仓库，按 `demo1` 到 `demo10` 逐步搭建一个越来越完整的 Agent 系统。
 
 设计思路：
 
@@ -13,6 +13,7 @@
 - `demo7` 用这个框架做一个简化版 coding agent
 - `demo8` 再往前一步，引入固定节点和路由的 workflow agent
 - `demo9` 在 workflow 的基础上加入 HITL（Human-in-the-Loop）审批
+- `demo10` 引入 RAG，把外部知识库接入 Agent 问答流程
 
 如果你是第一次接触 Agent，建议严格按顺序学习，不要直接跳到后面的 demo。这个仓库最有价值的地方，不只是“跑起来”，而是能看清楚 Agent 的能力是怎么一层层长出来的。
 
@@ -58,10 +59,24 @@
 pip install requests
 ```
 
+`demo10` 额外需要 PostgreSQL pgvector 和智谱 embedding SDK：
+
+```bash
+pip install -r demo10/requirements.txt
+```
+
 然后在 PowerShell 中配置环境变量：
 
 ```powershell
 $env:DEEPSEEK_API_KEY="你的 API Key"
+```
+
+运行 `demo10` 前还需要配置：
+
+```powershell
+$env:ZHIPU_API_KEY="你的智谱 API Key"
+$env:PGVECTOR_HOST="你的 PostgreSQL 公网访问地址"
+$env:PGVECTOR_PASSWORD="你的数据库密码"
 ```
 
 大多数 demo 都可以直接运行对应入口文件，例如：
@@ -76,6 +91,7 @@ python demo6/framework_demo.py
 python demo7/coding_agent_demo.py
 python demo8/workflow_demo.py
 python demo9/hitl_demo.py
+python demo10/rag_demo.py
 ```
 
 ## 仓库结构
@@ -90,6 +106,7 @@ demo6/  Framework：最小 Agent 框架
 demo7/  Coding Agent：受限工作区内的代码代理
 demo8/  Workflow Agent：固定节点编排的工作流代理
 demo9/  HITL Workflow：带人工确认的工作流代理
+demo10/ RAG Agent：基于 pgvector 的知识库检索增强问答
 ```
 
 ## Demo 逐个介绍
@@ -431,6 +448,59 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 
 如果 `demo8` 教你的是“如何让流程更稳定”，那么 `demo9` 教你的就是“如何让流程更安全”。
 
+### demo10：RAG Agent Demo
+
+入口文件：[demo10/rag_demo.py](D:\code\ai\agent-tutorial-public\demo10\rag_demo.py)
+
+关键模块：
+
+- [demo10/document_loader.py](D:\code\ai\agent-tutorial-public\demo10\document_loader.py)
+- [demo10/embeddings.py](D:\code\ai\agent-tutorial-public\demo10\embeddings.py)
+- [demo10/rag_store.py](D:\code\ai\agent-tutorial-public\demo10\rag_store.py)
+- [demo10/config.py](D:\code\ai\agent-tutorial-public\demo10\config.py)
+- [demo10/knowledge_base/agent_basics.md](D:\code\ai\agent-tutorial-public\demo10\knowledge_base\agent_basics.md)
+
+这一节把 Agent 从“只依赖上下文窗口”推进到“可以查询外部知识库”的形态，核心主题是 RAG（Retrieval-Augmented Generation）。
+
+这个 demo 展示了：
+
+- 如何把 `knowledge_base` 里的 Markdown 文档加载进来
+- 如何按 `CHUNK_SIZE` 和 `CHUNK_OVERLAP` 把长文档切成 chunks
+- 如何使用智谱 `embedding-3` 把文本转成向量
+- 如何把 chunk 内容和向量写入 PostgreSQL pgvector
+- 如何用用户问题做相似度检索，取回 Top-K 相关资料
+- 如何把检索结果整理进 prompt，再交给大模型生成答案
+
+`demo10` 的典型流程是：
+
+1. `load_knowledge_base()` 读取知识库文档
+2. `split_text()` 把文档切成适合检索的片段
+3. `embed_texts()` 调用 embedding 模型生成向量
+4. `rebuild_index()` 初始化 pgvector 表并写入索引
+5. `retrieve()` 根据用户问题找回相关 chunks
+6. `answer_with_rag()` 把资料和问题一起交给 LLM 回答
+
+和前面几节相比，这一节更强调：
+
+- Agent 不一定只能依赖 prompt 和历史消息
+- 外部知识库可以显著降低“凭空编造”的概率
+- RAG 的关键链路不是某一个 prompt，而是“加载、切分、向量化、入库、检索、生成”
+- 查询文本和文档文本必须使用同一个 embedding 模型，才能处在同一个向量空间
+
+示例知识库在这里：
+
+- [demo10/knowledge_base/agent_basics.md](D:\code\ai\agent-tutorial-public\demo10\knowledge_base\agent_basics.md)
+- [demo10/knowledge_base/react.md](D:\code\ai\agent-tutorial-public\demo10\knowledge_base\react.md)
+- [demo10/knowledge_base/workflow.md](D:\code\ai\agent-tutorial-public\demo10\knowledge_base\workflow.md)
+- [demo10/knowledge_base/hitl.md](D:\code\ai\agent-tutorial-public\demo10\knowledge_base\hitl.md)
+
+建议你用这一节重点体会两个问题：
+
+- 为什么 RAG 能让 Agent 回答“仓库知识库里才有”的问题
+- chunk 大小、overlap、Top-K 会怎样影响召回质量和回答质量
+
+如果 `demo9` 教你的是“让 Agent 在关键动作前更安全”，那么 `demo10` 教你的就是“让 Agent 在回答问题前先查资料”。
+
 ## 推荐学习路线
 
 ### 路线一：完全新手
@@ -446,6 +516,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 7. `demo7`：理解真实场景落地
 8. `demo8`：理解 workflow 编排和显式验证
 9. `demo9`：理解 HITL 审批和安全落盘
+10. `demo10`：理解 RAG 检索增强生成
 
 每学完一个 demo，都建议做两件事：
 
@@ -458,7 +529,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 
 1. 快速浏览 `demo1`
 2. 重点读 `demo2` 到 `demo5`
-3. 把主要精力放在 `demo6`、`demo7`、`demo8` 和 `demo9`
+3. 把主要精力放在 `demo6`、`demo7`、`demo8`、`demo9` 和 `demo10`
 
 这种路线更适合已经会写 prompt、会调接口，但还没形成 Agent 系统思维的人。
 
@@ -473,6 +544,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 5. `demo7`：面向代码场景的工具设计
 6. `demo8`：节点编排与 workflow 路由
 7. `demo9`：人工确认与安全执行边界
+8. `demo10`：外部知识库、向量检索与 RAG 问答
 
 你的关注点应该放在这些问题上：
 
@@ -529,6 +601,12 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 - 什么情况下需要 Human-in-the-Loop
 - 为什么“先给人确认再写文件”是很多生产系统的必要能力
 
+### 学完 demo10 后
+
+- RAG 为什么需要先检索再生成
+- chunk、embedding、向量数据库分别解决什么问题
+- 为什么资料不足时应该明确说明，而不是让模型自由发挥
+
 ## 建议的动手练习
 
 如果你想真正学会，建议按这个顺序自己改：
@@ -542,6 +620,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 7. 在 `demo7` 中增加一个“只做分析、不做修改”的审查型工具
 8. 在 `demo8` 中新增一个节点，比如“review patch”或“risk check”
 9. 在 `demo9` 中给审批节点增加“修改意见后重试”的分支
+10. 在 `demo10` 中新增一篇知识库文档，观察检索结果和回答是否变化
 
 ## 如何用这份仓库来学习
 
@@ -573,6 +652,7 @@ Agent 之所以“像代理”，不是因为它会聊天，而是因为它有�
 - 框架
 - 工作流编排
 - 人工确认
+- 检索增强生成
 - 场景化落地
 
 如果你按顺序学完，并且每一节都自己改过一点代码，基本就能从“会调用模型”进阶到“会设计一个最小可用 Agent 系统”。
