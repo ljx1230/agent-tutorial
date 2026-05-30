@@ -1,3 +1,4 @@
 psycopg[binary]>=3.2.0,<4
 zai-sdk>=0.0.4
 requests>=2.32.0
+mcp>=1.9.0
