@@ -63,8 +63,7 @@ def main() -> None:
             print(f"\n执行失败：{exc}")
             if message_store.messages and message_store.messages[-1]["role"] == "user":
                 message_store.messages.pop()
-            continue
-        
+            continue  
         print(f"\n助手：{final_answer}")
 
 
